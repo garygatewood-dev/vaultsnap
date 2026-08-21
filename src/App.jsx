@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './lib/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import VaultLock from './components/VaultLock'
 import Login from './pages/Login'
 import Vault from './pages/Vault'
 
@@ -14,7 +15,9 @@ function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <Vault />
+                <VaultLock>
+                  <Vault />
+                </VaultLock>
               </ProtectedRoute>
             }
           />
