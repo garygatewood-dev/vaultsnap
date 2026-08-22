@@ -43,3 +43,8 @@ export async function deletePhotoRecord(photoId) {
   const { error } = await supabase.from('photos').delete().eq('id', photoId)
   if (error) throw error
 }
+
+export async function updatePhotosAlbum(photoIds, albumId) {
+  const { error } = await supabase.from('photos').update({ album_id: albumId }).in('id', photoIds)
+  if (error) throw error
+}

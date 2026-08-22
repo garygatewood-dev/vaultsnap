@@ -17,6 +17,7 @@ import AlbumSidebar from '../components/AlbumSidebar'
 import SearchBar from '../components/SearchBar'
 import UploadButton from '../components/UploadButton'
 import PaywallScreen from '../components/PaywallScreen'
+import MoveToAlbumModal from '../components/MoveToAlbumModal'
 
 export default function Vault() {
   const { user, signOut } = useAuth()
@@ -33,6 +34,9 @@ export default function Vault() {
   const [biometricAvailable, setBiometricAvailable] = useState(false)
   const [biometricMessage, setBiometricMessage] = useState(null)
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('vaultsnap_view_mode') || 'grid')
+  const [selectionMode, setSelectionMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState(() => new Set())
+  const [moveTarget, setMoveTarget] = useState(null) // { photoIds, currentAlbumId } | null
 
   const subscribed = isSubscriptionActive(subscription)
 
@@ -183,6 +187,36 @@ export default function Vault() {
     setViewingIndex(idx === -1 ? null : idx)
   }
 
+  function handleToggleSelectionMode() {
+    setSelectionMode((mode) => !mode)
+    setSelectedIds(new Set())
+  }
+
+  function handleToggleSelect(photoId) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(photoId)) next.delete(photoId)
+      else next.add(photoId)
+      return next
+    })
+  }
+
+  function handleMoveSingle(photo) {
+    setMoveTarget({ photoIds: [photo.id], currentAlbumId: photo.album_id })
+  }
+
+  function handleMoveSelected() {
+    setMoveTarget({ photoIds: [...selectedIds], currentAlbumId: null })
+  }
+
+  async function handleMoved() {
+    setMoveTarget(null)
+    setSelectionMode(false)
+    setSelectedIds(new Set())
+    await loadPhotos()
+    loadAlbums()
+  }
+
   function handleCapReached() {
     setPaywall({
       reason: `You've reached the ${FREE_TIER_PHOTO_LIMIT}-photo free limit. Upgrade to add more.`,
@@ -253,8 +287,20 @@ export default function Vault() {
               List
             </button>
           </div>
+          <button type="button" className={selectionMode ? 'active' : ''} onClick={handleToggleSelectionMode}>
+            {selectionMode ? 'Cancel select' : 'Select'}
+          </button>
           <UploadButton albumId={uploadAlbumId} onUploaded={handleUploaded} onCapReached={handleCapReached} />
         </div>
+
+        {selectionMode && (
+          <div className="selection-bar">
+            <span>{selectedIds.size} selected</span>
+            <button type="button" onClick={handleMoveSelected} disabled={selectedIds.size === 0}>
+              Move to album
+            </button>
+          </div>
+        )}
 
         {error && <p role="alert">{error}</p>}
 
@@ -264,6 +310,10 @@ export default function Vault() {
             onOpen={handleOpenPhoto}
             onToggleFavorite={handleToggleFavorite}
             onDelete={handleDelete}
+            onMove={handleMoveSingle}
+            selectionMode={selectionMode}
+            selectedIds={selectedIds}
+            onToggleSelect={handleToggleSelect}
           />
         ) : (
           <PhotoList
@@ -271,6 +321,10 @@ export default function Vault() {
             onOpen={handleOpenPhoto}
             onToggleFavorite={handleToggleFavorite}
             onDelete={handleDelete}
+            onMove={handleMoveSingle}
+            selectionMode={selectionMode}
+            selectedIds={selectedIds}
+            onToggleSelect={handleToggleSelect}
           />
         )}
       </main>
@@ -289,6 +343,17 @@ export default function Vault() {
           reason={paywall.reason}
           dismissible={paywall.dismissible}
           onDismiss={() => setPaywall(null)}
+        />
+      )}
+
+      {moveTarget && (
+        <MoveToAlbumModal
+          photoIds={moveTarget.photoIds}
+          currentAlbumId={moveTarget.currentAlbumId}
+          albums={albums}
+          userId={user.id}
+          onMoved={handleMoved}
+          onClose={() => setMoveTarget(null)}
         />
       )}
     </div>
