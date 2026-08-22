@@ -3,31 +3,34 @@ import { useAuth } from '../lib/AuthContext'
 import { verifyVaultPin } from '../lib/vaultPin'
 import { isPlatformAuthenticatorAvailable, unlockWithBiometric } from '../lib/webauthn'
 
-export default function PinEntryForm({ userId, webauthnCredentialId, onUnlock }) {
+export default function PinEntryForm({ userId, webauthnCredentialIds, onUnlock }) {
   const { signOut } = useAuth()
   const [pin, setPin] = useState('')
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [biometricAvailable, setBiometricAvailable] = useState(false)
 
+  const hasBiometricCredentials = webauthnCredentialIds?.length > 0
+
   useEffect(() => {
     isPlatformAuthenticatorAvailable().then(setBiometricAvailable)
   }, [])
 
   useEffect(() => {
-    if (webauthnCredentialId && biometricAvailable) {
+    if (hasBiometricCredentials && biometricAvailable) {
       attemptBiometric()
     }
-    // Only re-run when the credential/availability actually change, not on every render.
+    // Only re-run when the credentials/availability actually change, not on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [webauthnCredentialId, biometricAvailable])
+  }, [webauthnCredentialIds, biometricAvailable])
 
   async function attemptBiometric() {
     try {
-      const success = await unlockWithBiometric(webauthnCredentialId)
+      const success = await unlockWithBiometric(webauthnCredentialIds)
       if (success) onUnlock()
     } catch {
-      // Cancelled, unavailable, or no matching credential on this device — fall back to PIN.
+      // Cancelled, unavailable, timed out, or no matching credential on this
+      // device — fall back to PIN, which is already visible below.
     }
   }
 
@@ -53,7 +56,7 @@ export default function PinEntryForm({ userId, webauthnCredentialId, onUnlock })
   return (
     <main className="lock-screen">
       <h1>Vault locked</h1>
-      {webauthnCredentialId && biometricAvailable && (
+      {hasBiometricCredentials && biometricAvailable && (
         <button type="button" onClick={attemptBiometric}>
           Unlock with Face ID / Touch ID
         </button>

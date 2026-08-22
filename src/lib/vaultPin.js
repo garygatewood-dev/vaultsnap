@@ -55,7 +55,7 @@ export async function setupVaultPin(userId, pin) {
 export async function getVaultPinRecord(userId) {
   const { data, error } = await supabase
     .from('vault_pins')
-    .select('pin_hash, webauthn_credential_id')
+    .select('pin_hash')
     .eq('user_id', userId)
     .maybeSingle()
   if (error) throw error
@@ -71,12 +71,4 @@ export async function verifyVaultPin(userId, pin) {
 
   const candidateHash = await derivePinHash(pin, base64ToBuffer(saltB64))
   return timingSafeEqual(candidateHash, expectedHash)
-}
-
-export async function setWebauthnCredentialId(userId, credentialId) {
-  const { error } = await supabase
-    .from('vault_pins')
-    .update({ webauthn_credential_id: credentialId })
-    .eq('user_id', userId)
-  if (error) throw error
 }

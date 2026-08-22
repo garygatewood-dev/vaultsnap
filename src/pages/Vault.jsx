@@ -9,6 +9,7 @@ import {
   createPortalSession,
   FREE_TIER_PHOTO_LIMIT,
 } from '../lib/subscription'
+import { isPlatformAuthenticatorAvailable, registerBiometricUnlock } from '../lib/webauthn'
 import PhotoGrid from '../components/PhotoGrid'
 import PhotoViewer from '../components/PhotoViewer'
 import AlbumSidebar from '../components/AlbumSidebar'
@@ -28,6 +29,8 @@ export default function Vault() {
   const [subscription, setSubscription] = useState(null)
   const [totalPhotoCount, setTotalPhotoCount] = useState(null)
   const [paywall, setPaywall] = useState(null) // { reason, dismissible } | null
+  const [biometricAvailable, setBiometricAvailable] = useState(false)
+  const [biometricMessage, setBiometricMessage] = useState(null)
 
   const subscribed = isSubscriptionActive(subscription)
 
@@ -76,6 +79,7 @@ export default function Vault() {
     getPhotoCount()
       .then(setTotalPhotoCount)
       .catch(() => {})
+    isPlatformAuthenticatorAvailable().then(setBiometricAvailable)
   }, [user.id])
 
   async function handleToggleFavorite(photo) {
@@ -158,6 +162,16 @@ export default function Vault() {
     }
   }
 
+  async function handleAddBiometric() {
+    setBiometricMessage(null)
+    try {
+      await registerBiometricUnlock(user.id, user.email)
+      setBiometricMessage('Face ID / Touch ID enabled for this device.')
+    } catch (err) {
+      setBiometricMessage(err.message)
+    }
+  }
+
   function handleOpenPhoto(photo) {
     const idx = photos.findIndex((p) => p.id === photo.id)
     setViewingIndex(idx === -1 ? null : idx)
@@ -187,6 +201,11 @@ export default function Vault() {
         <header className="vault-header">
           <h1>Your vault</h1>
           <div className="vault-header-actions">
+            {biometricAvailable && (
+              <button type="button" onClick={handleAddBiometric}>
+                Add Face ID / Touch ID
+              </button>
+            )}
             {subscribed ? (
               <button type="button" onClick={handleManageSubscription}>
                 Manage subscription
@@ -201,6 +220,8 @@ export default function Vault() {
             </button>
           </div>
         </header>
+
+        {biometricMessage && <p className="biometric-message">{biometricMessage}</p>}
 
         {!subscribed && totalPhotoCount !== null && (
           <p className="free-tier-indicator">

@@ -1,4 +1,11 @@
-import { setWebauthnCredentialId } from './vaultPin'
+import { addWebauthnCredential, listWebauthnCredentialIds } from './webauthnCredentials'
+
+// How long we wait for a biometric attempt before giving up and handing control
+// back to the visible PIN form. Some browsers (notably iOS Safari) show a native,
+// screen-covering "looking for a passkey" sheet even when allowCredentials has no
+// match on this device, and can be slow to resolve on their own — this is what
+// makes the PIN fallback actually feel reachable instead of stuck behind that sheet.
+const UNLOCK_ATTEMPT_TIMEOUT_MS = 8000
 
 export async function isPlatformAuthenticatorAvailable() {
   if (!window.PublicKeyCredential?.isUserVerifyingPlatformAuthenticatorAvailable) return false
@@ -9,8 +16,20 @@ export async function isPlatformAuthenticatorAvailable() {
   }
 }
 
+function guessDeviceLabel() {
+  if (typeof navigator === 'undefined') return null
+  const ua = navigator.userAgent
+  if (/iPhone/.test(ua)) return 'iPhone'
+  if (/iPad/.test(ua)) return 'iPad'
+  if (/Android/.test(ua)) return 'Android device'
+  if (/Macintosh/.test(ua)) return 'Mac'
+  if (/Windows/.test(ua)) return 'Windows PC'
+  return null
+}
+
 export async function registerBiometricUnlock(userId, userEmail) {
   const challenge = crypto.getRandomValues(new Uint8Array(32))
+  const existingIds = await listWebauthnCredentialIds(userId)
 
   const credential = await navigator.credentials.create({
     publicKey: {
@@ -29,6 +48,10 @@ export async function registerBiometricUnlock(userId, userEmail) {
         authenticatorAttachment: 'platform',
         userVerification: 'required',
       },
+      // Stops this device's authenticator from creating a redundant second
+      // credential if it already holds one of these — e.g. tapping "Add this
+      // device" again on a device that's already registered.
+      excludeCredentials: existingIds.map((id) => ({ id: base64urlToBuffer(id), type: 'public-key' })),
       timeout: 60000,
       attestation: 'none',
     },
@@ -36,23 +59,31 @@ export async function registerBiometricUnlock(userId, userEmail) {
 
   if (!credential) throw new Error('Biometric registration was cancelled')
 
-  await setWebauthnCredentialId(userId, credential.id)
+  await addWebauthnCredential(userId, credential.id, guessDeviceLabel())
   return credential.id
 }
 
-export async function unlockWithBiometric(credentialId) {
-  const challenge = crypto.getRandomValues(new Uint8Array(32))
+export async function unlockWithBiometric(credentialIds) {
+  if (!credentialIds?.length) return false
 
-  const assertion = await navigator.credentials.get({
-    publicKey: {
-      challenge,
-      allowCredentials: [{ id: base64urlToBuffer(credentialId), type: 'public-key' }],
-      userVerification: 'required',
-      timeout: 60000,
-    },
-  })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), UNLOCK_ATTEMPT_TIMEOUT_MS)
 
-  return Boolean(assertion)
+  try {
+    const challenge = crypto.getRandomValues(new Uint8Array(32))
+    const assertion = await navigator.credentials.get({
+      signal: controller.signal,
+      publicKey: {
+        challenge,
+        allowCredentials: credentialIds.map((id) => ({ id: base64urlToBuffer(id), type: 'public-key' })),
+        userVerification: 'required',
+        timeout: UNLOCK_ATTEMPT_TIMEOUT_MS,
+      },
+    })
+    return Boolean(assertion)
+  } finally {
+    clearTimeout(timeoutId)
+  }
 }
 
 function base64urlToBuffer(base64url) {

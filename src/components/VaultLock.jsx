@@ -1,21 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { getVaultPinRecord } from '../lib/vaultPin'
+import { listWebauthnCredentialIds } from '../lib/webauthnCredentials'
 import PinSetupForm from './PinSetupForm'
 import PinEntryForm from './PinEntryForm'
 
 export default function VaultLock({ children }) {
   const { user } = useAuth()
   const [status, setStatus] = useState('loading') // loading | needs-setup | locked | unlocked
-  const [webauthnCredentialId, setWebauthnCredentialIdState] = useState(null)
+  const [webauthnCredentialIds, setWebauthnCredentialIds] = useState([])
 
   const loadPinRecord = useCallback(async () => {
     const record = await getVaultPinRecord(user.id)
     if (!record?.pin_hash) {
       setStatus('needs-setup')
-      setWebauthnCredentialIdState(null)
+      setWebauthnCredentialIds([])
     } else {
-      setWebauthnCredentialIdState(record.webauthn_credential_id)
+      setWebauthnCredentialIds(await listWebauthnCredentialIds(user.id))
       setStatus('locked')
     }
   }, [user.id])
@@ -45,7 +46,7 @@ export default function VaultLock({ children }) {
         userId={user.id}
         userEmail={user.email}
         onComplete={(credentialId) => {
-          setWebauthnCredentialIdState(credentialId)
+          setWebauthnCredentialIds(credentialId ? [credentialId] : [])
           setStatus('unlocked')
         }}
       />
@@ -56,7 +57,7 @@ export default function VaultLock({ children }) {
     return (
       <PinEntryForm
         userId={user.id}
-        webauthnCredentialId={webauthnCredentialId}
+        webauthnCredentialIds={webauthnCredentialIds}
         onUnlock={() => setStatus('unlocked')}
       />
     )
