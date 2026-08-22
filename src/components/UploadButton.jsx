@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
 import { requestUploadUrls, uploadToSignedUrl } from '../lib/storage'
 import { generateThumbnail } from '../lib/thumbnail'
+import { normalizeOrientation } from '../lib/imageOrientation'
 import { createPhotoRecord } from '../lib/photos'
 
 export default function UploadButton({ albumId, onUploaded, onCapReached }) {
@@ -35,12 +36,17 @@ export default function UploadButton({ albumId, onUploaded, onCapReached }) {
   }
 
   async function uploadOne(file) {
+    // Thumbnails already come out correctly oriented (createImageBitmap bakes in
+    // EXIF rotation and canvas export strips metadata) — the original was being
+    // uploaded as-is, rotation tag and all, which is what caused it to display
+    // sideways. Only re-encodes when an actual rotation tag is present.
+    const uploadFile = file.type.startsWith('image/') ? await normalizeOrientation(file) : file
     const extension = file.name.split('.').pop() || 'bin'
     const thumbnailBlob = await generateThumbnail(file)
     const { original, thumbnail } = await requestUploadUrls(extension)
 
     await Promise.all([
-      uploadToSignedUrl(original.path, original.token, file),
+      uploadToSignedUrl(original.path, original.token, uploadFile),
       uploadToSignedUrl(thumbnail.path, thumbnail.token, thumbnailBlob),
     ])
 

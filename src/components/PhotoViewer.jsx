@@ -100,7 +100,12 @@ export default function PhotoViewer({ photos, index, onNavigate, onClose }) {
                     </button>
                   </div>
                   <TransformComponent wrapperClass="viewer-transform-wrapper" contentClass="viewer-transform-content">
-                    <img src={url} alt={photo.original_filename || 'Vault photo'} draggable={false} />
+                    <img
+                      src={url}
+                      alt={photo.original_filename || 'Vault photo'}
+                      draggable={false}
+                      style={{ imageOrientation: 'from-image' }}
+                    />
                   </TransformComponent>
                 </>
               )}
