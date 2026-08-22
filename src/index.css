@@ -101,18 +101,80 @@ button {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.9);
+  color: #fff;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 1rem;
   padding: 1.5rem;
 }
 
-.photo-viewer img,
-.photo-viewer video {
+.viewer-body {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.viewer-nav {
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.viewer-nav:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.viewer-stage {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.viewer-stage video {
   max-width: 100%;
-  max-height: 80vh;
+  max-height: 100%;
+}
+
+.viewer-transform-wrapper {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.viewer-transform-content img {
+  max-width: 100%;
+  max-height: 90vh;
+  user-select: none;
+}
+
+.viewer-zoom-controls {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 1;
+}
+
+.viewer-close {
+  align-self: center;
 }
 
 .lock-screen {

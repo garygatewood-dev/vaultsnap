@@ -23,7 +23,7 @@ export default function Vault() {
   // null = all photos, 'favorites' = favorites view, otherwise an album id
   const [selectedAlbumId, setSelectedAlbumId] = useState(null)
   const [search, setSearch] = useState('')
-  const [viewingPhoto, setViewingPhoto] = useState(null)
+  const [viewingIndex, setViewingIndex] = useState(null)
   const [error, setError] = useState(null)
   const [subscription, setSubscription] = useState(null)
   const [totalPhotoCount, setTotalPhotoCount] = useState(null)
@@ -61,6 +61,13 @@ export default function Vault() {
   useEffect(() => {
     loadPhotos()
   }, [loadPhotos])
+
+  // Guard against the viewer holding a stale index if the list changes while it's open.
+  useEffect(() => {
+    if (viewingIndex !== null && viewingIndex >= photos.length) {
+      setViewingIndex(null)
+    }
+  }, [photos, viewingIndex])
 
   useEffect(() => {
     getSubscription(user.id)
@@ -151,6 +158,11 @@ export default function Vault() {
     }
   }
 
+  function handleOpenPhoto(photo) {
+    const idx = photos.findIndex((p) => p.id === photo.id)
+    setViewingIndex(idx === -1 ? null : idx)
+  }
+
   function handleCapReached() {
     setPaywall({
       reason: `You've reached the ${FREE_TIER_PHOTO_LIMIT}-photo free limit. Upgrade to add more.`,
@@ -205,13 +217,20 @@ export default function Vault() {
 
         <PhotoGrid
           photos={photos}
-          onOpen={setViewingPhoto}
+          onOpen={handleOpenPhoto}
           onToggleFavorite={handleToggleFavorite}
           onDelete={handleDelete}
         />
       </main>
 
-      {viewingPhoto && <PhotoViewer photo={viewingPhoto} onClose={() => setViewingPhoto(null)} />}
+      {viewingIndex !== null && (
+        <PhotoViewer
+          photos={photos}
+          index={viewingIndex}
+          onNavigate={setViewingIndex}
+          onClose={() => setViewingIndex(null)}
+        />
+      )}
 
       {paywall && (
         <PaywallScreen
