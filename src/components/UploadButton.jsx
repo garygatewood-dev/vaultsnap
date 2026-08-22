@@ -4,7 +4,7 @@ import { requestUploadUrls, uploadToSignedUrl } from '../lib/storage'
 import { generateThumbnail } from '../lib/thumbnail'
 import { createPhotoRecord } from '../lib/photos'
 
-export default function UploadButton({ albumId, onUploaded }) {
+export default function UploadButton({ albumId, onUploaded, onCapReached }) {
   const { user } = useAuth()
   const inputRef = useRef(null)
   const [uploading, setUploading] = useState(false)
@@ -22,6 +22,10 @@ export default function UploadButton({ albumId, onUploaded }) {
       try {
         await uploadOne(file)
       } catch (err) {
+        if (err.message === 'FREE_TIER_LIMIT_REACHED') {
+          onCapReached?.()
+          break
+        }
         setError(err.message)
       }
     }

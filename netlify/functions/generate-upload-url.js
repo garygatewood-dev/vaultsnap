@@ -2,6 +2,10 @@ import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'node:crypto'
 
 const BUCKET = 'vault-photos'
+// Kept in sync with the enforce_photo_cap trigger in supabase/phase5.sql, which is
+// the actual authority — this check here only saves wasted upload bandwidth by
+// failing fast, before any bytes are sent to Storage.
+const FREE_TIER_PHOTO_LIMIT = 25
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
@@ -42,6 +46,16 @@ export async function handler(event) {
   const extension = sanitizeExtension(body.originalExtension)
   if (!extension) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing or invalid originalExtension' }) }
+  }
+
+  const [{ count: photoCount }, { data: subscription }] = await Promise.all([
+    supabase.from('photos').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+    supabase.from('subscriptions').select('status').eq('user_id', userId).maybeSingle(),
+  ])
+
+  const hasActiveSubscription = subscription?.status === 'active' || subscription?.status === 'trialing'
+  if ((photoCount ?? 0) >= FREE_TIER_PHOTO_LIMIT && !hasActiveSubscription) {
+    return { statusCode: 402, body: JSON.stringify({ error: 'FREE_TIER_LIMIT_REACHED' }) }
   }
 
   const photoId = randomUUID()

@@ -28,6 +28,12 @@ export async function createPhotoRecord({ userId, storagePath, thumbnailPath, al
   return data
 }
 
+export async function getPhotoCount() {
+  const { count, error } = await supabase.from('photos').select('id', { count: 'exact', head: true })
+  if (error) throw error
+  return count ?? 0
+}
+
 export async function toggleFavorite(photoId, isFavorite) {
   const { error } = await supabase.from('photos').update({ is_favorite: isFavorite }).eq('id', photoId)
   if (error) throw error

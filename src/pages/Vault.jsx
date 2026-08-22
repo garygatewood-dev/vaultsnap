@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../lib/AuthContext'
-import { listPhotos, toggleFavorite, deletePhotoRecord } from '../lib/photos'
+import { listPhotos, toggleFavorite, deletePhotoRecord, getPhotoCount } from '../lib/photos'
 import { listAlbums, createAlbum, renameAlbum, deleteAlbum } from '../lib/albums'
 import { removeFiles } from '../lib/storage'
+import { getSubscription, isSubscriptionActive, FREE_TIER_PHOTO_LIMIT } from '../lib/subscription'
 import PhotoGrid from '../components/PhotoGrid'
 import PhotoViewer from '../components/PhotoViewer'
 import AlbumSidebar from '../components/AlbumSidebar'
 import SearchBar from '../components/SearchBar'
 import UploadButton from '../components/UploadButton'
+import PaywallScreen from '../components/PaywallScreen'
 
 export default function Vault() {
   const { user, signOut } = useAuth()
@@ -18,6 +20,11 @@ export default function Vault() {
   const [search, setSearch] = useState('')
   const [viewingPhoto, setViewingPhoto] = useState(null)
   const [error, setError] = useState(null)
+  const [subscription, setSubscription] = useState(null)
+  const [totalPhotoCount, setTotalPhotoCount] = useState(null)
+  const [paywall, setPaywall] = useState(null) // { reason, dismissible } | null
+
+  const subscribed = isSubscriptionActive(subscription)
 
   const loadAlbums = useCallback(async () => {
     try {
@@ -50,6 +57,15 @@ export default function Vault() {
     loadPhotos()
   }, [loadPhotos])
 
+  useEffect(() => {
+    getSubscription(user.id)
+      .then(setSubscription)
+      .catch((err) => setError(err.message))
+    getPhotoCount()
+      .then(setTotalPhotoCount)
+      .catch(() => {})
+  }, [user.id])
+
   async function handleToggleFavorite(photo) {
     try {
       await toggleFavorite(photo.id, !photo.is_favorite)
@@ -65,6 +81,7 @@ export default function Vault() {
       await removeFiles([photo.storage_path, photo.thumbnail_path].filter(Boolean))
       await deletePhotoRecord(photo.id)
       loadPhotos()
+      getPhotoCount().then(setTotalPhotoCount).catch(() => {})
     } catch (err) {
       setError(err.message)
     }
@@ -100,6 +117,34 @@ export default function Vault() {
     }
   }
 
+  async function handleUploaded() {
+    await loadPhotos()
+    try {
+      const count = await getPhotoCount()
+      setTotalPhotoCount(count)
+      // Shown once ever per account, the first time they have a photo in the vault.
+      if (count >= 1 && !subscribed) {
+        const key = `vaultsnap_upsell_shown_${user.id}`
+        if (!localStorage.getItem(key)) {
+          localStorage.setItem(key, '1')
+          setPaywall({
+            reason: 'Nice — your vault is growing. Upgrade anytime for unlimited photos.',
+            dismissible: true,
+          })
+        }
+      }
+    } catch {
+      // non-critical — free-tier indicator just won't update this cycle
+    }
+  }
+
+  function handleCapReached() {
+    setPaywall({
+      reason: `You've reached the ${FREE_TIER_PHOTO_LIMIT}-photo free limit. Upgrade to add more.`,
+      dismissible: true,
+    })
+  }
+
   const uploadAlbumId = selectedAlbumId === 'favorites' ? null : selectedAlbumId
 
   return (
@@ -116,14 +161,27 @@ export default function Vault() {
       <main>
         <header className="vault-header">
           <h1>Your vault</h1>
-          <button type="button" onClick={() => signOut()}>
-            Sign out
-          </button>
+          <div className="vault-header-actions">
+            {!subscribed && (
+              <button type="button" onClick={() => setPaywall({ dismissible: true })}>
+                Upgrade
+              </button>
+            )}
+            <button type="button" onClick={() => signOut()}>
+              Sign out
+            </button>
+          </div>
         </header>
+
+        {!subscribed && totalPhotoCount !== null && (
+          <p className="free-tier-indicator">
+            {totalPhotoCount} of {FREE_TIER_PHOTO_LIMIT} free photos used
+          </p>
+        )}
 
         <div className="vault-toolbar">
           <SearchBar value={search} onChange={setSearch} />
-          <UploadButton albumId={uploadAlbumId} onUploaded={loadPhotos} />
+          <UploadButton albumId={uploadAlbumId} onUploaded={handleUploaded} onCapReached={handleCapReached} />
         </div>
 
         {error && <p role="alert">{error}</p>}
@@ -137,6 +195,14 @@ export default function Vault() {
       </main>
 
       {viewingPhoto && <PhotoViewer photo={viewingPhoto} onClose={() => setViewingPhoto(null)} />}
+
+      {paywall && (
+        <PaywallScreen
+          reason={paywall.reason}
+          dismissible={paywall.dismissible}
+          onDismiss={() => setPaywall(null)}
+        />
+      )}
     </div>
   )
 }

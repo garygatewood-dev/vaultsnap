@@ -128,3 +128,95 @@ button {
 .lock-screen form {
   width: 100%;
 }
+
+.vault-header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.free-tier-indicator {
+  font-size: 0.85rem;
+  opacity: 0.75;
+  margin: 0.5rem 0 0;
+}
+
+.paywall-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 10;
+}
+
+.paywall-card {
+  position: relative;
+  max-width: 420px;
+  width: 100%;
+  background: canvas;
+  border-radius: 0.75rem;
+  padding: 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.paywall-dismiss {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.paywall-plans {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.paywall-plan {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 1rem;
+  border: 2px solid transparent;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, canvastext 6%, transparent);
+  text-align: left;
+}
+
+.paywall-plan.selected {
+  border-color: currentColor;
+}
+
+.paywall-plan-name {
+  font-weight: 700;
+}
+
+.paywall-plan-price {
+  font-size: 1.1rem;
+}
+
+.paywall-plan-sub {
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+.paywall-badge {
+  position: absolute;
+  top: -0.6rem;
+  right: 0.75rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: canvastext;
+  color: canvas;
+  padding: 0.15rem 0.5rem;
+  border-radius: 1rem;
+}
