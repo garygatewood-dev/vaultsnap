@@ -3,7 +3,12 @@ import { useAuth } from '../lib/AuthContext'
 import { listPhotos, toggleFavorite, deletePhotoRecord, getPhotoCount } from '../lib/photos'
 import { listAlbums, createAlbum, renameAlbum, deleteAlbum } from '../lib/albums'
 import { removeFiles } from '../lib/storage'
-import { getSubscription, isSubscriptionActive, FREE_TIER_PHOTO_LIMIT } from '../lib/subscription'
+import {
+  getSubscription,
+  isSubscriptionActive,
+  createPortalSession,
+  FREE_TIER_PHOTO_LIMIT,
+} from '../lib/subscription'
 import PhotoGrid from '../components/PhotoGrid'
 import PhotoViewer from '../components/PhotoViewer'
 import AlbumSidebar from '../components/AlbumSidebar'
@@ -138,6 +143,14 @@ export default function Vault() {
     }
   }
 
+  async function handleManageSubscription() {
+    try {
+      window.location.href = await createPortalSession()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   function handleCapReached() {
     setPaywall({
       reason: `You've reached the ${FREE_TIER_PHOTO_LIMIT}-photo free limit. Upgrade to add more.`,
@@ -162,7 +175,11 @@ export default function Vault() {
         <header className="vault-header">
           <h1>Your vault</h1>
           <div className="vault-header-actions">
-            {!subscribed && (
+            {subscribed ? (
+              <button type="button" onClick={handleManageSubscription}>
+                Manage subscription
+              </button>
+            ) : (
               <button type="button" onClick={() => setPaywall({ dismissible: true })}>
                 Upgrade
               </button>

@@ -38,3 +38,25 @@ export async function createCheckoutSession(plan) {
   const { url } = await response.json()
   return url
 }
+
+export async function createPortalSession() {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const accessToken = sessionData.session?.access_token
+  if (!accessToken) throw new Error('Not signed in')
+
+  const response = await fetch('/.netlify/functions/create-portal-session', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const { error } = await response.json().catch(() => ({}))
+    throw new Error(error || 'Failed to open billing portal')
+  }
+
+  const { url } = await response.json()
+  return url
+}
