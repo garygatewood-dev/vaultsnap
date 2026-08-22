@@ -11,6 +11,7 @@ import {
 } from '../lib/subscription'
 import { isPlatformAuthenticatorAvailable, registerBiometricUnlock } from '../lib/webauthn'
 import PhotoGrid from '../components/PhotoGrid'
+import PhotoList from '../components/PhotoList'
 import PhotoViewer from '../components/PhotoViewer'
 import AlbumSidebar from '../components/AlbumSidebar'
 import SearchBar from '../components/SearchBar'
@@ -31,8 +32,13 @@ export default function Vault() {
   const [paywall, setPaywall] = useState(null) // { reason, dismissible } | null
   const [biometricAvailable, setBiometricAvailable] = useState(false)
   const [biometricMessage, setBiometricMessage] = useState(null)
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('vaultsnap_view_mode') || 'grid')
 
   const subscribed = isSubscriptionActive(subscription)
+
+  useEffect(() => {
+    localStorage.setItem('vaultsnap_view_mode', viewMode)
+  }, [viewMode])
 
   const loadAlbums = useCallback(async () => {
     try {
@@ -231,17 +237,42 @@ export default function Vault() {
 
         <div className="vault-toolbar">
           <SearchBar value={search} onChange={setSearch} />
+          <div className="view-mode-toggle">
+            <button
+              type="button"
+              className={viewMode === 'grid' ? 'active' : ''}
+              onClick={() => setViewMode('grid')}
+            >
+              Grid
+            </button>
+            <button
+              type="button"
+              className={viewMode === 'list' ? 'active' : ''}
+              onClick={() => setViewMode('list')}
+            >
+              List
+            </button>
+          </div>
           <UploadButton albumId={uploadAlbumId} onUploaded={handleUploaded} onCapReached={handleCapReached} />
         </div>
 
         {error && <p role="alert">{error}</p>}
 
-        <PhotoGrid
-          photos={photos}
-          onOpen={handleOpenPhoto}
-          onToggleFavorite={handleToggleFavorite}
-          onDelete={handleDelete}
-        />
+        {viewMode === 'grid' ? (
+          <PhotoGrid
+            photos={photos}
+            onOpen={handleOpenPhoto}
+            onToggleFavorite={handleToggleFavorite}
+            onDelete={handleDelete}
+          />
+        ) : (
+          <PhotoList
+            photos={photos}
+            onOpen={handleOpenPhoto}
+            onToggleFavorite={handleToggleFavorite}
+            onDelete={handleDelete}
+          />
+        )}
       </main>
 
       {viewingIndex !== null && (

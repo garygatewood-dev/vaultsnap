@@ -68,73 +68,77 @@ export default function PhotoViewer({ photos, index, onNavigate, onClose }) {
 
   return (
     <div className="photo-viewer" role="dialog" aria-modal="true">
-      <div className="viewer-body">
-        <button
-          type="button"
-          className="viewer-nav viewer-nav-prev"
-          onClick={() => goTo(index - 1)}
-          disabled={index === 0}
-          aria-label="Previous photo"
-        >
-          ‹
-        </button>
-
-        <div
-          className="viewer-stage"
-          onPointerDown={handlePointerDown}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={() => {
-            swipeRef.current = null
-          }}
-        >
-          {url ? (
-            isVideo ? (
-              <video src={url} controls autoPlay />
-            ) : (
-              <TransformWrapper
-                key={photo.id}
-                initialScale={1}
-                minScale={1}
-                maxScale={4}
-                panning={{ disabled: scale <= 1 }}
-                doubleClick={{ mode: 'toggle' }}
-                onTransformed={(_ref, state) => setScale(state.scale)}
-              >
-                {({ zoomIn, zoomOut }) => (
-                  <>
-                    <div className="viewer-zoom-controls">
-                      <button type="button" onClick={() => zoomIn()} aria-label="Zoom in">
-                        +
-                      </button>
-                      <button type="button" onClick={() => zoomOut()} aria-label="Zoom out">
-                        −
-                      </button>
-                    </div>
-                    <TransformComponent wrapperClass="viewer-transform-wrapper" contentClass="viewer-transform-content">
-                      <img src={url} alt={photo.original_filename || 'Vault photo'} draggable={false} />
-                    </TransformComponent>
-                  </>
-                )}
-              </TransformWrapper>
-            )
+      <div
+        className="viewer-stage"
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={() => {
+          swipeRef.current = null
+        }}
+      >
+        {url ? (
+          isVideo ? (
+            <video src={url} controls autoPlay />
           ) : (
-            <p>Loading…</p>
-          )}
-        </div>
-
-        <button
-          type="button"
-          className="viewer-nav viewer-nav-next"
-          onClick={() => goTo(index + 1)}
-          disabled={index === photos.length - 1}
-          aria-label="Next photo"
-        >
-          ›
-        </button>
+            <TransformWrapper
+              key={photo.id}
+              initialScale={1}
+              minScale={1}
+              maxScale={4}
+              panning={{ disabled: scale <= 1 }}
+              doubleClick={{ mode: 'toggle' }}
+              onTransformed={(_ref, state) => setScale(state.scale)}
+            >
+              {({ zoomIn, zoomOut }) => (
+                <>
+                  <div className="viewer-zoom-controls">
+                    <button type="button" onClick={() => zoomIn()} aria-label="Zoom in">
+                      +
+                    </button>
+                    <button type="button" onClick={() => zoomOut()} aria-label="Zoom out">
+                      −
+                    </button>
+                  </div>
+                  <TransformComponent wrapperClass="viewer-transform-wrapper" contentClass="viewer-transform-content">
+                    <img src={url} alt={photo.original_filename || 'Vault photo'} draggable={false} />
+                  </TransformComponent>
+                </>
+              )}
+            </TransformWrapper>
+          )
+        ) : (
+          <p>Loading…</p>
+        )}
       </div>
 
-      <button type="button" className="viewer-close" onClick={onClose}>
-        Close
+      {/*
+        Close/prev/next are DOM siblings of .viewer-stage, not descendants of the
+        zoomable TransformComponent tree — their on-screen position is fixed
+        relative to the viewer overlay itself, so zooming/panning the image never
+        moves or covers them.
+      */}
+      <button type="button" className="viewer-close" onClick={onClose} aria-label="Close">
+        ×
+      </button>
+
+      <button
+        type="button"
+        className="viewer-nav viewer-nav-prev"
+        onClick={() => goTo(index - 1)}
+        disabled={index === 0}
+        aria-label="Previous photo"
+      >
+        ‹
+      </button>
+
+      <button
+        type="button"
+        className="viewer-nav viewer-nav-next"
+        onClick={() => goTo(index + 1)}
+        disabled={index === photos.length - 1}
+        aria-label="Next photo"
+      >
+        ›
       </button>
     </div>
   )
