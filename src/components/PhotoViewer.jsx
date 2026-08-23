@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
 import { getSignedViewUrl } from '../lib/storage'
+import { downloadFile } from '../lib/download'
 
 const VIDEO_EXTENSION_PATTERN = /\.(mp4|mov|webm|m4v)$/i
 const SWIPE_THRESHOLD = 50
@@ -38,16 +39,7 @@ export default function PhotoViewer({ photos, index, onNavigate, onClose }) {
     if (!url || downloading) return
     setDownloading(true)
     try {
-      const response = await fetch(url)
-      const blob = await response.blob()
-      const blobUrl = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = blobUrl
-      link.download = photo.original_filename || 'photo'
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      URL.revokeObjectURL(blobUrl)
+      await downloadFile(url, photo.original_filename || 'photo')
     } catch (err) {
       console.error('Download failed', err)
     } finally {

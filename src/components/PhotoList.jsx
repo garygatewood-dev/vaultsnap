@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getSignedViewUrl } from '../lib/storage'
+import { downloadFile } from '../lib/download'
 
 function PhotoListRow({
   photo,
@@ -26,12 +27,26 @@ function PhotoListRow({
   }, [photo.thumbnail_path])
 
   const date = photo.created_at ? new Date(photo.created_at).toLocaleDateString() : ''
+  const [downloading, setDownloading] = useState(false)
 
   function handleRowClick() {
     if (selectionMode) {
       onToggleSelect(photo.id)
     } else {
       onOpen(photo)
+    }
+  }
+
+  async function handleDownload() {
+    if (downloading) return
+    setDownloading(true)
+    try {
+      const fullUrl = await getSignedViewUrl(photo.storage_path)
+      await downloadFile(fullUrl, photo.original_filename || 'photo')
+    } catch (err) {
+      console.error('Download failed', err)
+    } finally {
+      setDownloading(false)
     }
   }
 
@@ -53,6 +68,9 @@ function PhotoListRow({
         <div className="photo-list-actions">
           <button type="button" onClick={() => onToggleFavorite(photo)}>
             {photo.is_favorite ? '★' : '☆'}
+          </button>
+          <button type="button" onClick={handleDownload} disabled={downloading} aria-label="Download">
+            {downloading ? '…' : '⬇'}
           </button>
           <button type="button" onClick={() => onMove(photo)}>
             Move

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getSignedViewUrl } from '../lib/storage'
+import { downloadFile } from '../lib/download'
 
 export default function PhotoCard({
   photo,
@@ -25,11 +26,26 @@ export default function PhotoCard({
     }
   }, [photo.thumbnail_path])
 
+  const [downloading, setDownloading] = useState(false)
+
   function handleThumbClick() {
     if (selectionMode) {
       onToggleSelect(photo.id)
     } else {
       onOpen(photo)
+    }
+  }
+
+  async function handleDownload() {
+    if (downloading) return
+    setDownloading(true)
+    try {
+      const fullUrl = await getSignedViewUrl(photo.storage_path)
+      await downloadFile(fullUrl, photo.original_filename || 'photo')
+    } catch (err) {
+      console.error('Download failed', err)
+    } finally {
+      setDownloading(false)
     }
   }
 
@@ -51,6 +67,9 @@ export default function PhotoCard({
         <div className="photo-card-actions">
           <button type="button" onClick={() => onToggleFavorite(photo)}>
             {photo.is_favorite ? '★' : '☆'}
+          </button>
+          <button type="button" onClick={handleDownload} disabled={downloading} aria-label="Download">
+            {downloading ? '…' : '⬇'}
           </button>
           <button type="button" onClick={() => onMove(photo)}>
             Move
