@@ -32,6 +32,29 @@ export default function PhotoViewer({ photos, index, onNavigate, onClose }) {
     setScale(1)
   }, [index])
 
+  const [downloading, setDownloading] = useState(false)
+
+  async function handleDownload() {
+    if (!url || downloading) return
+    setDownloading(true)
+    try {
+      const response = await fetch(url)
+      const blob = await response.blob()
+      const blobUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = photo.original_filename || 'photo'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(blobUrl)
+    } catch (err) {
+      console.error('Download failed', err)
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   function goTo(newIndex) {
     if (newIndex < 0 || newIndex >= photos.length) return
     onNavigate(newIndex)
@@ -128,6 +151,16 @@ export default function PhotoViewer({ photos, index, onNavigate, onClose }) {
         relative to the viewer overlay itself, so zooming/panning the image never
         moves or covers them.
       */}
+      <button
+        type="button"
+        className="viewer-download"
+        onClick={handleDownload}
+        disabled={!url || downloading}
+        aria-label="Download"
+      >
+        {downloading ? '…' : '⬇'}
+      </button>
+
       <button type="button" className="viewer-close" onClick={onClose} aria-label="Close">
         ×
       </button>
