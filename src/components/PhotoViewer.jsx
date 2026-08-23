@@ -89,7 +89,7 @@ export default function PhotoViewer({ photos, index, onNavigate, onClose }) {
               doubleClick={{ mode: 'toggle' }}
               onTransformed={(_ref, state) => setScale(state.scale)}
             >
-              {({ zoomIn, zoomOut }) => (
+              {({ zoomIn, zoomOut, resetTransform }) => (
                 <>
                   <div className="viewer-zoom-controls">
                     <button type="button" onClick={() => zoomIn()} aria-label="Zoom in">
@@ -105,6 +105,12 @@ export default function PhotoViewer({ photos, index, onNavigate, onClose }) {
                       alt={photo.original_filename || 'Vault photo'}
                       draggable={false}
                       style={{ imageOrientation: 'from-image' }}
+                      // The library measures layout bounds on mount, before this image has
+                      // actually finished loading — so it can center/scale against a 0x0 or
+                      // stale box and land on a wrong, zoomed-looking initial view. Forcing
+                      // a reset once the real image is loaded fixes that without any visible
+                      // animation (0ms).
+                      onLoad={() => resetTransform(0)}
                     />
                   </TransformComponent>
                 </>

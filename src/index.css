@@ -105,9 +105,15 @@ button {
   display: block;
 }
 
+.photo-card {
+  min-width: 0;
+}
+
 .photo-card-actions {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.25rem;
   margin-top: 0.25rem;
 }
 
