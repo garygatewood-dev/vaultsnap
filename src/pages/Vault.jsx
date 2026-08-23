@@ -217,6 +217,12 @@ export default function Vault() {
     loadAlbums()
   }
 
+  function handleEnhanced(photoId, enhancedStoragePath) {
+    setPhotos((prev) =>
+      prev.map((p) => (p.id === photoId ? { ...p, enhanced_storage_path: enhancedStoragePath } : p)),
+    )
+  }
+
   function handleCapReached() {
     setPaywall({
       reason: `You've reached the ${FREE_TIER_PHOTO_LIMIT}-photo free limit. Upgrade to add more.`,
@@ -335,6 +341,11 @@ export default function Vault() {
           index={viewingIndex}
           onNavigate={setViewingIndex}
           onClose={() => setViewingIndex(null)}
+          subscribed={subscribed}
+          onRequirePremium={() =>
+            setPaywall({ reason: 'Unlock AI photo enhancement with Premium.', dismissible: true })
+          }
+          onEnhanced={handleEnhanced}
         />
       )}
 

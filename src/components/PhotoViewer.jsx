@@ -2,11 +2,20 @@ import { useEffect, useRef, useState } from 'react'
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
 import { getSignedViewUrl } from '../lib/storage'
 import { downloadFile } from '../lib/download'
+import { enhancePhoto } from '../lib/enhance'
 
 const VIDEO_EXTENSION_PATTERN = /\.(mp4|mov|webm|m4v)$/i
 const SWIPE_THRESHOLD = 50
 
-export default function PhotoViewer({ photos, index, onNavigate, onClose }) {
+export default function PhotoViewer({
+  photos,
+  index,
+  onNavigate,
+  onClose,
+  subscribed,
+  onRequirePremium,
+  onEnhanced,
+}) {
   const photo = photos[index]
   const [url, setUrl] = useState(null)
   const [scale, setScale] = useState(1)
@@ -14,10 +23,22 @@ export default function PhotoViewer({ photos, index, onNavigate, onClose }) {
 
   const isVideo = VIDEO_EXTENSION_PATTERN.test(photo.storage_path)
 
+  // Which version (original vs AI-enhanced) is currently displayed. Defaults
+  // to whichever the photo actually has — enhanced if one already exists.
+  const [showingEnhanced, setShowingEnhanced] = useState(Boolean(photo.enhanced_storage_path))
+  const activePath = showingEnhanced && photo.enhanced_storage_path ? photo.enhanced_storage_path : photo.storage_path
+
+  useEffect(() => {
+    // Reset per-photo view state when navigating to a different photo in the viewer.
+    setShowingEnhanced(Boolean(photo.enhanced_storage_path))
+    setEnhanceError(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photo.id])
+
   useEffect(() => {
     let cancelled = false
     setUrl(null)
-    getSignedViewUrl(photo.storage_path)
+    getSignedViewUrl(activePath)
       .then((signedUrl) => {
         if (!cancelled) setUrl(signedUrl)
       })
@@ -25,7 +46,7 @@ export default function PhotoViewer({ photos, index, onNavigate, onClose }) {
     return () => {
       cancelled = true
     }
-  }, [photo.storage_path])
+  }, [activePath])
 
   // Zoom/pan lives inside TransformWrapper, keyed by photo id below — a fresh key
   // remounts it per photo, which is what resets zoom when navigating.
@@ -39,11 +60,35 @@ export default function PhotoViewer({ photos, index, onNavigate, onClose }) {
     if (!url || downloading) return
     setDownloading(true)
     try {
-      await downloadFile(url, photo.original_filename || 'photo')
+      const baseName = photo.original_filename || 'photo'
+      const filename = showingEnhanced && photo.enhanced_storage_path ? `enhanced-${baseName}` : baseName
+      await downloadFile(url, filename)
     } catch (err) {
       console.error('Download failed', err)
     } finally {
       setDownloading(false)
+    }
+  }
+
+  const [enhancing, setEnhancing] = useState(false)
+  const [enhanceError, setEnhanceError] = useState(null)
+
+  async function handleEnhance() {
+    if (enhancing) return
+    if (!subscribed) {
+      onRequirePremium?.()
+      return
+    }
+    setEnhancing(true)
+    setEnhanceError(null)
+    try {
+      const enhancedStoragePath = await enhancePhoto(photo.id)
+      onEnhanced?.(photo.id, enhancedStoragePath)
+      setShowingEnhanced(true)
+    } catch (err) {
+      setEnhanceError(err.message)
+    } finally {
+      setEnhancing(false)
     }
   }
 
@@ -96,7 +141,7 @@ export default function PhotoViewer({ photos, index, onNavigate, onClose }) {
             <video src={url} controls autoPlay />
           ) : (
             <TransformWrapper
-              key={photo.id}
+              key={`${photo.id}-${activePath}`}
               initialScale={1}
               minScale={1}
               maxScale={4}
@@ -137,12 +182,42 @@ export default function PhotoViewer({ photos, index, onNavigate, onClose }) {
         )}
       </div>
 
+      {enhanceError && (
+        <p className="viewer-enhance-error" role="alert">
+          {enhanceError}
+        </p>
+      )}
+
       {/*
-        Close/prev/next are DOM siblings of .viewer-stage, not descendants of the
-        zoomable TransformComponent tree — their on-screen position is fixed
-        relative to the viewer overlay itself, so zooming/panning the image never
-        moves or covers them.
+        Close/prev/next/download/enhance are DOM siblings of .viewer-stage, not
+        descendants of the zoomable TransformComponent tree — their on-screen
+        position is fixed relative to the viewer overlay itself, so
+        zooming/panning the image never moves or covers them.
       */}
+      {!isVideo &&
+        (photo.enhanced_storage_path ? (
+          <button
+            type="button"
+            className="viewer-enhance-toggle"
+            onClick={() => setShowingEnhanced((v) => !v)}
+            aria-label={showingEnhanced ? 'Show original' : 'Show enhanced'}
+            title={showingEnhanced ? 'Show original' : 'Show enhanced'}
+          >
+            ⇄
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="viewer-enhance"
+            onClick={handleEnhance}
+            disabled={enhancing}
+            aria-label="Enhance with AI"
+            title="Enhance with AI"
+          >
+            {enhancing ? '…' : '✨'}
+          </button>
+        ))}
+
       <button
         type="button"
         className="viewer-download"

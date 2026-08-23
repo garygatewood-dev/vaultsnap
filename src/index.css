@@ -302,6 +302,8 @@ button {
 
 .viewer-close,
 .viewer-download,
+.viewer-enhance,
+.viewer-enhance-toggle,
 .viewer-nav,
 .viewer-zoom-controls button {
   position: absolute;
@@ -330,6 +332,33 @@ button {
 .viewer-download:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+.viewer-enhance,
+.viewer-enhance-toggle {
+  top: 0.75rem;
+  right: 6.25rem;
+}
+
+.viewer-enhance:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.viewer-enhance-error {
+  position: absolute;
+  z-index: 2;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 80%;
+  margin: 0;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 0.85rem;
+  text-align: center;
 }
 
 .viewer-zoom-controls {
