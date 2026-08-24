@@ -4,27 +4,56 @@ import { FREE_TIER_PHOTO_LIMIT } from '../lib/subscription'
 
 const FEATURES = [
   {
-    title: 'Locked, just for you',
-    body: 'Sign in, then unlock again with Face ID, Touch ID, or a PIN. Your vault stays closed until you open it.',
+    title: 'Photos and video, one vault',
+    body: "Upload photos and video straight from your phone's camera or gallery, or from your computer's files. Everything lands in the same private vault.",
   },
   {
-    title: 'Organize effortlessly',
-    body: 'Sort photos into albums, mark favorites, and search by filename to find anything in seconds.',
+    title: 'Phone to computer, and back',
+    body: "Snap a photo on your phone and pull it up on your laptop minutes later — or upload from your desktop and grab it from your phone. Your vault goes wherever you do.",
   },
   {
     title: 'AI Enhance ✨',
-    body: 'Sharpen old or blurry photos and restore faces with one tap — powered by AI, included with Premium.',
+    body: 'Sharpen old, blurry, or low-res photos and restore faces with one tap — real AI enhancement, not a filter. Included with Premium.',
   },
   {
-    title: 'Download anywhere',
-    body: "Save any photo straight back to your phone's photo library or your computer, whenever you want it.",
+    title: 'Locked, twice',
+    body: "Sign in, then unlock again with Face ID, Touch ID, or a PIN. Your vault stays closed until you open it — even on a device that's already signed in.",
   },
+  {
+    title: 'Organize and download freely',
+    body: "Sort into albums, mark favorites, and download anything back to your device — including straight to your phone's photo library — whenever you want it.",
+  },
+]
+
+const SECURITY_POINTS = [
+  'Every photo is scoped to your account at the database level — genuinely inaccessible to anyone else, not just hidden in the app.',
+  'Your vault is locked behind two layers: your account sign-in, then Face ID, Touch ID, or a PIN before anything inside is visible.',
+  "No ads, ever. Your photos are never sold, mined, or shared — they're yours.",
 ]
 
 const PLANS = [
   { id: 'annual', name: 'Annual', price: '$39.99/yr', sub: 'Just $3.33/mo — best value', highlight: true },
   { id: 'monthly', name: 'Monthly', price: '$6.99/mo', sub: 'Billed monthly' },
 ]
+
+function LogoMark({ size = 36 }) {
+  return (
+    <svg
+      className="landing-logo-mark"
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      aria-hidden="true"
+    >
+      <rect width="40" height="40" rx="10" fill="#131b2e" />
+      <path d="M14 18v-3a6 6 0 0 1 12 0v3" stroke="#2dd4bf" strokeWidth="2.5" strokeLinecap="round" />
+      <rect x="11" y="18" width="18" height="14" rx="3" fill="#2dd4bf" />
+      <circle cx="20" cy="24" r="2" fill="#131b2e" />
+      <rect x="19" y="25" width="2" height="4" rx="1" fill="#131b2e" />
+    </svg>
+  )
+}
 
 export default function Landing() {
   const { user, loading } = useAuth()
@@ -35,17 +64,20 @@ export default function Landing() {
   return (
     <div className="landing">
       <header className="landing-header">
-        <span className="landing-logo">VaultSnap</span>
+        <span className="landing-brand">
+          <LogoMark />
+          <span className="landing-logo-text">VaultSnap</span>
+        </span>
         <Link to="/login" className="landing-nav-login">
           Log in
         </Link>
       </header>
 
       <section className="landing-hero">
-        <h1>Your photos, private and protected.</h1>
+        <h1>Your photos and videos, private and protected.</h1>
         <p>
-          VaultSnap is a locked-down photo vault with albums, favorites, and AI-powered enhancement — so your
-          memories stay organized, safe, and always yours.
+          VaultSnap is a locked-down vault for photos and video — upload from your phone or computer, enhance with
+          AI, and access from anywhere, all in one place that's genuinely yours.
         </p>
         <div className="landing-hero-actions">
           <Link to="/login?mode=signup" className="landing-cta">
@@ -64,19 +96,28 @@ export default function Landing() {
         ))}
       </section>
 
+      <section className="landing-security">
+        <h2>Built to be private</h2>
+        <ul className="landing-security-list">
+          {SECURITY_POINTS.map((point) => (
+            <li key={point}>{point}</li>
+          ))}
+        </ul>
+      </section>
+
       <section className="landing-pricing">
         <h2>Simple pricing</h2>
         <p className="landing-pricing-sub">
           Start free with {FREE_TIER_PHOTO_LIMIT} photos. Upgrade anytime for unlimited storage and AI enhancement,
           with a 2-day free trial.
         </p>
-        <div className="paywall-plans landing-plans">
+        <div className="landing-plans">
           {PLANS.map((p) => (
-            <div className={`paywall-plan ${p.highlight ? 'selected' : ''}`} key={p.id}>
-              {p.highlight && <span className="paywall-badge">Best value</span>}
-              <span className="paywall-plan-name">{p.name}</span>
-              <span className="paywall-plan-price">{p.price}</span>
-              <span className="paywall-plan-sub">{p.sub}</span>
+            <div className={`landing-plan ${p.highlight ? 'highlight' : ''}`} key={p.id}>
+              {p.highlight && <span className="landing-plan-badge">Best value</span>}
+              <span className="landing-plan-name">{p.name}</span>
+              <span className="landing-plan-price">{p.price}</span>
+              <span className="landing-plan-sub">{p.sub}</span>
             </div>
           ))}
         </div>
