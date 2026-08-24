@@ -31,7 +31,7 @@ export default function PaywallScreen({ reason, dismissible = false, onDismiss }
             ×
           </button>
         )}
-        <h1>VaultSnap Premium</h1>
+        <h1>MyVaultSnap Premium</h1>
         <p>{reason || 'Unlock unlimited photos with a 2-day free trial.'}</p>
 
         <div className="paywall-plans">

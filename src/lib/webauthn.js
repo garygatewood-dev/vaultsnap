@@ -12,7 +12,7 @@ const UNLOCK_ATTEMPT_TIMEOUT_MS = 8000
 // default to the current origin) means credentials keep working even if the
 // app is later served from a different subdomain, and — more importantly —
 // makes it obvious in code that a credential registered under one domain
-// will never match on another. If VaultSnap's primary domain ever changes,
+// will never match on another. If MyVaultSnap's primary domain ever changes,
 // every user will need to re-register biometric unlock.
 const RP_ID = 'myvaultsnap.com'
 
@@ -43,7 +43,7 @@ export async function registerBiometricUnlock(userId, userEmail) {
   const credential = await navigator.credentials.create({
     publicKey: {
       challenge,
-      rp: { id: RP_ID, name: 'VaultSnap' },
+      rp: { id: RP_ID, name: 'MyVaultSnap' },
       user: {
         id: new TextEncoder().encode(userId),
         name: userEmail,

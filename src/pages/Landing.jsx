@@ -33,7 +33,7 @@ const SECURITY_POINTS = [
 
 const FAQS = [
   {
-    q: 'Does VaultSnap support video, or just photos?',
+    q: 'Does MyVaultSnap support video, or just photos?',
     a: 'Both. Upload and store video right alongside your photos — no separate app needed.',
   },
   {
@@ -85,7 +85,7 @@ export default function Landing() {
       <header className="landing-header">
         <span className="landing-brand">
           <LogoMark />
-          <span className="landing-logo-text">VaultSnap</span>
+          <span className="landing-logo-text">MyVaultSnap</span>
         </span>
         <Link to="/login" className="landing-nav-login">
           Log in
@@ -95,7 +95,7 @@ export default function Landing() {
       <section className="landing-hero">
         <h1>Your photos and videos, private and protected.</h1>
         <p>
-          VaultSnap is a locked-down vault for photos and video — upload from your phone or computer, enhance with
+          MyVaultSnap is a locked-down vault for photos and video — upload from your phone or computer, enhance with
           AI, and access from anywhere, all in one place that's genuinely yours.
         </p>
         <div className="landing-hero-actions">
@@ -110,7 +110,7 @@ export default function Landing() {
         <h2>Not just another camera roll</h2>
         <p>
           Your phone's default Photos app isn't private — anyone who picks up an unlocked phone can flip through it.
-          VaultSnap keeps sensitive photos and video in a separate, locked space with its own Face ID, Touch ID, or
+          MyVaultSnap keeps sensitive photos and video in a separate, locked space with its own Face ID, Touch ID, or
           PIN, so they're never just sitting in your everyday camera roll.
         </p>
       </section>
@@ -167,7 +167,7 @@ export default function Landing() {
       </section>
 
       <footer className="landing-footer">
-        <span>© {new Date().getFullYear()} VaultSnap</span>
+        <span>© {new Date().getFullYear()} MyVaultSnap</span>
       </footer>
     </div>
   )

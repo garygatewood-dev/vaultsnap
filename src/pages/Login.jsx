@@ -40,7 +40,7 @@ export default function Login() {
   return (
     <main>
       <Link to="/" className="login-back-link">
-        ← VaultSnap
+        ← MyVaultSnap
       </Link>
       <h1>{mode === 'signin' ? 'Sign in' : 'Create your account'}</h1>
       <form onSubmit={handleSubmit}>
