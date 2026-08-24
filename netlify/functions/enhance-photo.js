@@ -1,11 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
 import Replicate from 'replicate'
+import sharp from 'sharp'
 
 const BUCKET = 'vault-photos'
 // Kept in sync with the enforce_enhancement_cap trigger in supabase/phase6.sql,
 // which is the actual authority — this check here only saves a wasted Replicate
 // call (real money) before that trigger would reject the log-insert anyway.
 const MONTHLY_ENHANCEMENT_CAP = 100
+
+// nightmareai/real-esrgan runs GFPGAN face restoration over the whole frame
+// (no tiling) when face_enhance is on, which hits a hard GPU-memory ceiling —
+// confirmed live at exactly 2,096,704 input pixels (1448x1448) on a photo that
+// failed. Almost any modern phone photo exceeds that, so we downscale before
+// sending rather than letting the call fail. Kept a bit under the observed
+// ceiling for safety margin.
+const MAX_INPUT_PIXELS = 2_000_000
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
@@ -74,6 +83,8 @@ export async function handler(event) {
       .createSignedUrl(photo.storage_path, 300)
     if (signError) throw signError
 
+    const replicateImageInput = await buildReplicateImageInput(signedOriginal.signedUrl)
+
     // nightmareai/real-esrgan does upscaling AND face restoration (GFPGAN,
     // via face_enhance) in a single call — one model, one round trip, which
     // is what backs the single "Enhance" button rather than us chaining two
@@ -81,7 +92,7 @@ export async function handler(event) {
     const replicate = new Replicate({ auth: replicateToken })
     const output = await replicate.run('nightmareai/real-esrgan', {
       input: {
-        image: signedOriginal.signedUrl,
+        image: replicateImageInput,
         scale: 2,
         face_enhance: true,
       },
@@ -115,6 +126,34 @@ export async function handler(event) {
     console.error('Enhance error:', err)
     return { statusCode: 500, body: JSON.stringify({ error: err.message }) }
   }
+}
+
+// Downscales the original photo before handing it to Replicate if it exceeds
+// the model's GPU-memory ceiling (see MAX_INPUT_PIXELS above). Returns the
+// original signed URL unchanged when no resize is needed, so the common case
+// (a photo already under the ceiling) takes the cheap path with no extra
+// download/re-encode round trip.
+async function buildReplicateImageInput(signedUrl) {
+  const originalResponse = await fetch(signedUrl)
+  if (!originalResponse.ok) throw new Error('Failed to download original photo')
+  const originalBuffer = Buffer.from(await originalResponse.arrayBuffer())
+
+  const metadata = await sharp(originalBuffer).metadata()
+  const totalPixels = (metadata.width ?? 0) * (metadata.height ?? 0)
+
+  if (!totalPixels || totalPixels <= MAX_INPUT_PIXELS) {
+    return signedUrl
+  }
+
+  const scaleFactor = Math.sqrt(MAX_INPUT_PIXELS / totalPixels)
+  const targetWidth = Math.max(1, Math.floor(metadata.width * scaleFactor))
+  const resized = sharp(originalBuffer).resize({ width: targetWidth, withoutEnlargement: true })
+
+  const isPng = metadata.format === 'png'
+  const resizedBuffer = isPng ? await resized.png().toBuffer() : await resized.jpeg({ quality: 92 }).toBuffer()
+  const mimeType = isPng ? 'image/png' : 'image/jpeg'
+
+  return `data:${mimeType};base64,${resizedBuffer.toString('base64')}`
 }
 
 function startOfMonthISO() {

@@ -3,6 +3,13 @@
   publish = "dist"
   functions = "netlify/functions"
 
+[functions]
+  # sharp ships a platform-specific native binary — esbuild's default function
+  # bundler can break that by inlining it incorrectly. Marking it external
+  # keeps it as a real node_modules install instead, so the correct linux-x64
+  # binary (installed during Netlify's own build) is what actually ships.
+  external_node_modules = ["sharp"]
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
