@@ -7,6 +7,7 @@ import Login from './pages/Login'
 import Vault from './pages/Vault'
 import ResetPassword from './pages/ResetPassword'
 import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           <Route
             path="/vault"
             element={
