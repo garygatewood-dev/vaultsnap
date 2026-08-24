@@ -1,7 +1,7 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-const SITE_URL = 'https://garyvaultsnap.netlify.app'
+const SITE_URL = 'https://myvaultsnap.com'
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
@@ -49,7 +49,8 @@ export async function handler(event) {
 
     const session = await stripe.billingPortal.sessions.create({
       customer: subscription.stripe_customer_id,
-      return_url: `${SITE_URL}/`,
+      // Points at /vault directly, not / — see create-checkout.js for why.
+      return_url: `${SITE_URL}/vault`,
     })
 
     return { statusCode: 200, body: JSON.stringify({ url: session.url }) }

@@ -31,6 +31,25 @@ const SECURITY_POINTS = [
   "No ads, ever. Your photos are never sold, mined, or shared — they're yours.",
 ]
 
+const FAQS = [
+  {
+    q: 'Does VaultSnap support video, or just photos?',
+    a: 'Both. Upload and store video right alongside your photos — no separate app needed.',
+  },
+  {
+    q: 'Can I cancel Premium anytime?',
+    a: "Yes. Billing is monthly or annual with no long-term contract, and you can cancel anytime from your account.",
+  },
+  {
+    q: 'What happens to my photos if I cancel?',
+    a: "They stay exactly where they are. You keep access to everything already in your vault — you just won't be able to add more than the free 25-photo limit until you resubscribe.",
+  },
+  {
+    q: 'Is AI Enhance available on the free plan?',
+    a: "It's included with Premium, along with unlimited photos — you can try it during the 2-day free trial before committing.",
+  },
+]
+
 const PLANS = [
   { id: 'annual', name: 'Annual', price: '$39.99/yr', sub: 'Just $3.33/mo — best value', highlight: true },
   { id: 'monthly', name: 'Monthly', price: '$6.99/mo', sub: 'Billed monthly' },
@@ -87,6 +106,15 @@ export default function Landing() {
         </div>
       </section>
 
+      <section className="landing-why">
+        <h2>Not just another camera roll</h2>
+        <p>
+          Your phone's default Photos app isn't private — anyone who picks up an unlocked phone can flip through it.
+          VaultSnap keeps sensitive photos and video in a separate, locked space with its own Face ID, Touch ID, or
+          PIN, so they're never just sitting in your everyday camera roll.
+        </p>
+      </section>
+
       <section className="landing-features">
         {FEATURES.map((f) => (
           <div className="landing-feature-card" key={f.title}>
@@ -103,6 +131,18 @@ export default function Landing() {
             <li key={point}>{point}</li>
           ))}
         </ul>
+      </section>
+
+      <section className="landing-faq">
+        <h2>Questions</h2>
+        <div className="landing-faq-list">
+          {FAQS.map((item) => (
+            <div className="landing-faq-item" key={item.q}>
+              <h3>{item.q}</h3>
+              <p>{item.a}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="landing-pricing">

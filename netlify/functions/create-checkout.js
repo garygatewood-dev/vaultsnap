@@ -1,7 +1,7 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-const SITE_URL = 'https://garyvaultsnap.netlify.app'
+const SITE_URL = 'https://myvaultsnap.com'
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') {
@@ -61,8 +61,11 @@ export async function handler(event) {
         trial_period_days: 2,
         metadata: { user_id: user.id },
       },
-      success_url: `${SITE_URL}/?checkout=success`,
-      cancel_url: `${SITE_URL}/?checkout=cancelled`,
+      // Points at /vault directly (not /) — "/" is now the public landing page,
+      // which would just immediately bounce a signed-in user to /vault anyway
+      // via its own redirect, so this skips that pointless extra hop.
+      success_url: `${SITE_URL}/vault?checkout=success`,
+      cancel_url: `${SITE_URL}/vault?checkout=cancelled`,
     })
 
     return { statusCode: 200, body: JSON.stringify({ url: session.url }) }
