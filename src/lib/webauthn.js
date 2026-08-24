@@ -7,6 +7,15 @@ import { addWebauthnCredential, listWebauthnCredentialIds } from './webauthnCred
 // makes the PIN fallback actually feel reachable instead of stuck behind that sheet.
 const UNLOCK_ATTEMPT_TIMEOUT_MS = 8000
 
+// WebAuthn credentials are permanently bound to whichever rp.id they were
+// created under. Pinning this explicitly (instead of letting the browser
+// default to the current origin) means credentials keep working even if the
+// app is later served from a different subdomain, and — more importantly —
+// makes it obvious in code that a credential registered under one domain
+// will never match on another. If VaultSnap's primary domain ever changes,
+// every user will need to re-register biometric unlock.
+const RP_ID = 'myvaultsnap.com'
+
 export async function isPlatformAuthenticatorAvailable() {
   if (!window.PublicKeyCredential?.isUserVerifyingPlatformAuthenticatorAvailable) return false
   try {
@@ -34,7 +43,7 @@ export async function registerBiometricUnlock(userId, userEmail) {
   const credential = await navigator.credentials.create({
     publicKey: {
       challenge,
-      rp: { name: 'VaultSnap' },
+      rp: { id: RP_ID, name: 'VaultSnap' },
       user: {
         id: new TextEncoder().encode(userId),
         name: userEmail,
@@ -75,6 +84,7 @@ export async function unlockWithBiometric(credentialIds) {
       signal: controller.signal,
       publicKey: {
         challenge,
+        rpId: RP_ID,
         allowCredentials: credentialIds.map((id) => ({ id: base64urlToBuffer(id), type: 'public-key' })),
         userVerification: 'required',
         timeout: UNLOCK_ATTEMPT_TIMEOUT_MS,
