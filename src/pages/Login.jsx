@@ -1,17 +1,20 @@
 import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 
 export default function Login() {
   const { user, signIn, signUp } = useAuth()
-  const [mode, setMode] = useState('signin')
+  const [searchParams] = useSearchParams()
+  // Landing page's "Get started free" CTA links here with ?mode=signup so
+  // visitors land straight on the signup form instead of having to toggle.
+  const [mode, setMode] = useState(searchParams.get('mode') === 'signup' ? 'signup' : 'signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
   const [info, setInfo] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
-  if (user) return <Navigate to="/" replace />
+  if (user) return <Navigate to="/vault" replace />
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -36,7 +39,10 @@ export default function Login() {
 
   return (
     <main>
-      <h1>VaultSnap</h1>
+      <Link to="/" className="login-back-link">
+        ← VaultSnap
+      </Link>
+      <h1>{mode === 'signin' ? 'Sign in' : 'Create your account'}</h1>
       <form onSubmit={handleSubmit}>
         <label>
           Email
