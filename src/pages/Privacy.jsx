@@ -63,10 +63,10 @@ export default function Privacy() {
       <h2>AI Enhance</h2>
       <p>
         If you use AI Enhance on a photo, that photo is sent securely to Replicate, a third-party AI processing
-        service, solely to run the enhancement and return the result — it is not used by Replicate to train models
-        or retained by them beyond what's needed to process your request. The enhanced photo is then stored back in
-        your vault the same way as any other photo. AI Enhance only runs on photos you specifically choose to
-        enhance.
+        service, solely to run the enhancement and return the result. Per Replicate's published documentation,
+        input and output files from API predictions like this are automatically deleted from their systems within
+        an hour. The enhanced photo is then stored back in your vault the same way as any other photo. AI Enhance
+        only runs on photos you specifically choose to enhance.
       </p>
 
       <h2>Who we share information with</h2>
