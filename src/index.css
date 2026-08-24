@@ -762,6 +762,46 @@ button {
   background: var(--vs-navy);
   color: rgba(255, 255, 255, 0.6);
   font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.landing-footer-link {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.landing-footer-link:hover {
+  color: #fff;
+}
+
+.legal-page {
+  max-width: 640px;
+  line-height: 1.6;
+}
+
+.legal-page h1 {
+  margin-bottom: 0.25rem;
+}
+
+.legal-updated {
+  opacity: 0.65;
+  font-size: 0.9rem;
+  margin-top: 0;
+}
+
+.legal-page h2 {
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.15rem;
+}
+
+.legal-page ul {
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
 }
 
 @media (max-width: 560px) {

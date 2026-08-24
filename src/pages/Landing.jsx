@@ -168,6 +168,9 @@ export default function Landing() {
 
       <footer className="landing-footer">
         <span>© {new Date().getFullYear()} MyVaultSnap</span>
+        <Link to="/privacy" className="landing-footer-link">
+          Privacy Policy
+        </Link>
       </footer>
     </div>
   )
